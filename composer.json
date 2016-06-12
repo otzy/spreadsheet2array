@@ -1,0 +1,30 @@
+{
+    "name": "otzy/spreadsheet2array",
+    "description": "Autodetects and extracts tables from spreadsheet to PHP array",
+    "keywords": ["facebook", "sdk"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Evgeny Mazovetskiy",
+            "homepage": "https://github.com/otzy/"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "require-dev": {
+        "phpoffice/phpexcel": "*",
+        "phpunit/phpunit": "~4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Otzy\\": "src/Otzy/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Otzy\\Tests\\": "tests/"
+        }
+    }
+}

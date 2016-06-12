@@ -1,0 +1,230 @@
+<?php
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016 Evgeny Mazovetskiy
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+namespace Otzy;
+
+class Spreadsheet2Array{
+    /**
+     * Read file content to array
+     * Parameters:
+     * @param string $file_name name of file to read
+     * @param string $type 'auto', 'csv', 'xls', 'xlsx', 'ods'
+     * @param bool|string|int $sheet Sheet Name/Index to read.
+     *                        Index must be passed as an <b>integer</b>. Sheets are zero-based. I.e. first sheet has index=0<br>
+     *                        If <b>false</b> read active sheet. This is normally the sheet, that was active at the moment of Save in Excel or Open Office<br>
+     *                        Not applicable for csv
+     * @param int $first_row first row to read (zero based).
+     * @param int $first_col first column to read (zero based).
+     * @param string[]|bool $col_names array of field names or false to use $firstRow for field names
+     * @param bool $check_col_names Parameter works only when <b>$col_names !== false</b>.<br>
+     *                              If <b>true</b> - check that column names and the order of names are exactly the same as value and order of cells in the first row.<br>
+     *                              If <b>false</b> - only check that all $col_names are represented in the first row
+     *
+     * @return array
+     * @throws
+     */
+    public static function readTable($file_name, $type = 'auto', $sheet = false, $first_row = 0, $first_col = 0, $col_names = false, $check_col_names = false) {
+        $objSheet = self::getSheet($file_name, $type, $sheet);
+
+        $result = array();
+
+        $row_number = 0;
+        $header_index = array();
+        foreach ($objSheet->getRowIterator($first_row + 1) as $row) {
+            /* @var \PHPExcel_Worksheet_Row $row */
+            $row_number++;
+
+            if ($row_number == 1){
+                //this is a header. Read it to array
+                $header = self::readRow($row, $first_col);
+
+                if ($check_col_names && $header != $col_names){
+                    throw new SpreadSheet2ArrayException('Fields in the spreadsheet differ from the required ones.');
+                }
+
+                if (!$check_col_names){
+                    $diff = array_diff($col_names, $header);
+                    if (count($diff) > 0){
+                        throw new SpreadSheet2ArrayException('Fields are missing in the input file: '.implode(', ', $diff));
+                    }
+                }
+
+                $header_index = array_flip($header);
+                continue;
+            }
+
+            $cells = self::readRow($row, $first_col);
+            $cells_filtered = array();
+            foreach($col_names as $field_name){
+                $cells_filtered[$field_name] = $cells[$header_index[$field_name]];
+            }
+
+            $result[] = $cells_filtered;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param \PHPExcel_Worksheet $objSheet
+     * @param int $firstRow
+     * @param int $firstCol
+     * @param int $maxRows how many rows to read
+     * @param int $maxCols how many columns to read
+     *
+     * @return array[]
+     */
+    public static function readHeadlessTable(\PHPExcel_Worksheet $objSheet, $firstRow, $firstCol, $maxRows = 0, $maxCols = 0) {
+        /* @var array[] $result */
+        $result = array();
+        $row_count = 0;
+        $longest_row_length = 0;
+
+        foreach ($objSheet->getRowIterator($firstRow) as $row) {
+            /* @var \PHPExcel_Worksheet_Row $row */
+            $row_count++;
+            if ($maxRows > 0 && $row_count > $maxRows) {
+                break;
+            }
+
+            //Read cells, starting from $firstCol
+            $cells = array();
+            $cellIterator = $row->getCellIterator();
+            $cellIterator->setIterateOnlyExistingCells(true);
+            $col_index = 0;
+            foreach ($cellIterator as $cell) {
+                /* @var \PHPExcel_Cell $cell */
+
+                if ($col_index < $firstCol) {
+                    continue;
+                }
+
+                if ($maxCols > 0 && count($cells) >= $maxCols) {
+                    break;
+                }
+
+                $cells[] = $cell->getValue();
+                $col_index++;
+            }
+
+            $result[] = $cells;
+            $longest_row_length = max($longest_row_length, count($cells));
+        }
+
+        //align the number of elements in each row. I.e add missing elements
+        foreach ($result as &$v) {
+            for ($i = count($v); $i < $longest_row_length; $i++) {
+                $v[] = false;
+            }
+        }
+        unset($v);
+
+        return $result;
+    }
+
+    /**
+     * @param string $file_name
+     * @param string $type
+     * @param bool $sheet
+     * @return \PHPExcel_Worksheet
+     * @throws SpreadSheet2ArrayException
+     * @throws \PHPExcel_Exception
+     */
+    private static function getSheet($file_name, $type = 'auto', $sheet = false){
+        if ($type == 'auto') {
+            $objPHPExcel = \PHPExcel_IOFactory::load($file_name);
+        } else {
+            $objReader = self::getReader($type);
+            if ($type != 'csv' && is_string($sheet)) {
+                //load only the needed sheet. This works only if $sheet passed as a string
+                $objReader->setLoadSheetsOnly($sheet);
+            }
+            $objPHPExcel = $objReader->load($file_name);
+        }
+
+        if (is_string($sheet)) {
+            $objSheet = $objPHPExcel->getSheetByName($sheet);
+        } elseif (is_int($sheet)) {
+            $objSheet = $objPHPExcel->getSheet($sheet);
+        } elseif ($sheet === false) {
+            $objSheet = $objPHPExcel->getActiveSheet();
+        } else {
+            throw new SpreadSheet2ArrayException('Invalid type of the $sheet parameter. It must be string, int or boolean false');
+        }
+
+        return $objSheet;
+    }
+
+    private static function getReader($type) {
+        switch ($type) {
+            case 'xls':
+                $objReader = new \PHPExcel_Reader_Excel5();
+                break;
+            case 'xlsx':
+                $objReader = new \PHPExcel_Reader_Excel2007();
+                break;
+            case 'ods':
+                $objReader = new \PHPExcel_Reader_OOCalc();
+                break;
+            case 'csv':
+                $objReader = new \PHPExcel_Reader_CSV();
+                break;
+            default:
+                throw new \PHPExcel_Exception("Unsupported spreadsheet type $type");
+        }
+
+        if ($type != 'csv') {
+            //we don't need format
+            $objReader->setReadDataOnly(true);
+        }
+
+        return $objReader;
+    }
+
+    /**
+     * @param \PHPExcel_Worksheet_Row $row
+     * @param int $start_cell
+     * @return array
+     */
+    private static function readRow(\PHPExcel_Worksheet_Row $row, $start_cell = 0){
+        $result = array();
+        $cell_iterator = $row->getCellIterator();
+        $cell_iterator->setIterateOnlyExistingCells(true);
+        $cell_index = 0;
+        foreach($cell_iterator as $cell){
+            /* @var \PHPExcel_Cell $cell */
+
+            if ($cell_index < $start_cell){
+                continue;
+            }
+
+            $result = $cell->getValue();
+            $cell_index++;
+        }
+
+        return $result;
+    }
+
+}
