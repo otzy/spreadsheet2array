@@ -56,18 +56,18 @@ class Spreadsheet2Array{
             /* @var \PHPExcel_Worksheet_Row $row */
             $row_number++;
 
-            if ($row_number == 1){
+            if ($row_number == 1) {
                 //this is a header. Read it to array
                 $header = self::readRow($row, $first_col);
 
-                if ($check_col_names && $header != $col_names){
-                    throw new SpreadSheet2ArrayException('Fields in the spreadsheet differ from the required ones.');
+                if ($check_col_names && $header != $col_names) {
+                    throw new Spreadsheet2ArrayException('Fields in the spreadsheet differ from the required ones.');
                 }
 
-                if (!$check_col_names){
+                if (!$check_col_names) {
                     $diff = array_diff($col_names, $header);
-                    if (count($diff) > 0){
-                        throw new SpreadSheet2ArrayException('Fields are missing in the input file: '.implode(', ', $diff));
+                    if (count($diff) > 0) {
+                        throw new Spreadsheet2ArrayException('Fields are missing in the input file: ' . implode(', ', $diff));
                     }
                 }
 
@@ -77,7 +77,7 @@ class Spreadsheet2Array{
 
             $cells = self::readRow($row, $first_col);
             $cells_filtered = array();
-            foreach($col_names as $field_name){
+            foreach ($col_names as $field_name) {
                 $cells_filtered[$field_name] = $cells[$header_index[$field_name]];
             }
 
@@ -96,13 +96,15 @@ class Spreadsheet2Array{
      *
      * @return array[]
      */
-    public static function readHeadlessTable(\PHPExcel_Worksheet $objSheet, $firstRow, $firstCol, $maxRows = 0, $maxCols = 0) {
+    public static function readHeadlessTable(\PHPExcel_Worksheet $objSheet, $firstRow, $firstCol,
+                                                                                        $maxRows = 0, $maxCols = 0)
+    {
         /* @var array[] $result */
         $result = array();
         $row_count = 0;
         $longest_row_length = 0;
 
-        foreach ($objSheet->getRowIterator($firstRow) as $row) {
+        foreach ($objSheet->getRowIterator($firstRow + 1) as $row) {
             /* @var \PHPExcel_Worksheet_Row $row */
             $row_count++;
             if ($maxRows > 0 && $row_count > $maxRows) {
@@ -110,24 +112,25 @@ class Spreadsheet2Array{
             }
 
             //Read cells, starting from $firstCol
-            $cells = array();
-            $cellIterator = $row->getCellIterator();
-            $cellIterator->setIterateOnlyExistingCells(true);
-            $col_index = 0;
-            foreach ($cellIterator as $cell) {
-                /* @var \PHPExcel_Cell $cell */
-
-                if ($col_index < $firstCol) {
-                    continue;
-                }
-
-                if ($maxCols > 0 && count($cells) >= $maxCols) {
-                    break;
-                }
-
-                $cells[] = $cell->getValue();
-                $col_index++;
-            }
+            $cells = self::readRow($row, $firstCol);
+//            $cells = array();
+//            $cellIterator = $row->getCellIterator();
+//            $cellIterator->setIterateOnlyExistingCells(false);
+//            $col_index = 0;
+//            foreach ($cellIterator as $cell) {
+//                /* @var \PHPExcel_Cell $cell */
+//
+//                if ($col_index < $firstCol) {
+//                    continue;
+//                }
+//
+//                if ($maxCols > 0 && count($cells) >= $maxCols) {
+//                    break;
+//                }
+//
+//                $cells[] = $cell->getValue();
+//                $col_index++;
+//            }
 
             $result[] = $cells;
             $longest_row_length = max($longest_row_length, count($cells));
@@ -136,7 +139,7 @@ class Spreadsheet2Array{
         //align the number of elements in each row. I.e add missing elements
         foreach ($result as &$v) {
             for ($i = count($v); $i < $longest_row_length; $i++) {
-                $v[] = false;
+                $v[] = null;
             }
         }
         unset($v);
@@ -147,18 +150,18 @@ class Spreadsheet2Array{
     /**
      * @param string $file_name
      * @param string $type
-     * @param bool $sheet
+     * @param bool|string|int $sheet
      * @return \PHPExcel_Worksheet
-     * @throws SpreadSheet2ArrayException
+     * @throws Spreadsheet2ArrayException
      * @throws \PHPExcel_Exception
      */
-    private static function getSheet($file_name, $type = 'auto', $sheet = false){
+    public static function getSheet($file_name, $type = 'auto', $sheet = false) {
         if ($type == 'auto') {
             $objPHPExcel = \PHPExcel_IOFactory::load($file_name);
         } else {
             $objReader = self::getReader($type);
             if ($type != 'csv' && is_string($sheet)) {
-                //load only the needed sheet. This works only if $sheet passed as a string
+                //load only the needed sheet, just to save memory. This works only if $sheet passed as a string
                 $objReader->setLoadSheetsOnly($sheet);
             }
             $objPHPExcel = $objReader->load($file_name);
@@ -171,7 +174,7 @@ class Spreadsheet2Array{
         } elseif ($sheet === false) {
             $objSheet = $objPHPExcel->getActiveSheet();
         } else {
-            throw new SpreadSheet2ArrayException('Invalid type of the $sheet parameter. It must be string, int or boolean false');
+            throw new Spreadsheet2ArrayException('Invalid type of the $sheet parameter. It must be string, int or boolean false');
         }
 
         return $objSheet;
@@ -208,23 +211,56 @@ class Spreadsheet2Array{
      * @param int $start_cell
      * @return array
      */
-    private static function readRow(\PHPExcel_Worksheet_Row $row, $start_cell = 0){
+    private static function readRow(\PHPExcel_Worksheet_Row $row, $start_cell = 0) {
         $result = array();
         $cell_iterator = $row->getCellIterator();
-        $cell_iterator->setIterateOnlyExistingCells(true);
-        $cell_index = 0;
-        foreach($cell_iterator as $cell){
+        $cell_iterator->setIterateOnlyExistingCells(false);
+        $cell_index = -1; //actually the first is 0, but we increment it in the beginning of the loop
+        $not_null_right_index = -1;
+        foreach ($cell_iterator as $cell) {
             /* @var \PHPExcel_Cell $cell */
+            $cell_index++;
 
-            if ($cell_index < $start_cell){
+            if ($cell_index < $start_cell) {
                 continue;
             }
 
-            $result = $cell->getValue();
-            $cell_index++;
+            $result[] = $cell->getValue();
+
+            //remember position of the rightmost not null element, in order to remove null values later without additional loop
+            if ($result[count($result) - 1] !== null){
+                $not_null_right_index = count($result) - 1;
+            }
+
         }
 
+        //delete all rightmost null elements (Excel issue)
+        $result = array_slice($result, 0, $not_null_right_index+1);
+
         return $result;
+    }
+
+    /**
+     * for test
+     *
+     * @param string $method_name
+     * @param array $arguments
+     * @return mixed
+     */
+    public static function invokePrivate($method_name, $arguments){
+        $method =  (new \ReflectionClass(__CLASS__))->getMethod($method_name);
+        $method->setAccessible(true);
+        return $method->invokeArgs(null, $arguments);
+    }
+
+    /**
+     * Converts internal representation of date to unix timestamp
+     *
+     * @param float $excel_value
+     * @return int
+     */
+    public static function excelDate2Timestamp($excel_value){
+        return round($excel_value * 86400, 0) - 2209165200;
     }
 
 }

@@ -1,3 +1,3 @@
 <?php
 namespace Otzy;
-class SpreadSheet2ArrayException extends \Exception{}
+class Spreadsheet2ArrayException extends \Exception{}
