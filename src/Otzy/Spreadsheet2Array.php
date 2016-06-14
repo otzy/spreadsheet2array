@@ -113,24 +113,9 @@ class Spreadsheet2Array{
 
             //Read cells, starting from $firstCol
             $cells = self::readRow($row, $firstCol);
-//            $cells = array();
-//            $cellIterator = $row->getCellIterator();
-//            $cellIterator->setIterateOnlyExistingCells(false);
-//            $col_index = 0;
-//            foreach ($cellIterator as $cell) {
-//                /* @var \PHPExcel_Cell $cell */
-//
-//                if ($col_index < $firstCol) {
-//                    continue;
-//                }
-//
-//                if ($maxCols > 0 && count($cells) >= $maxCols) {
-//                    break;
-//                }
-//
-//                $cells[] = $cell->getValue();
-//                $col_index++;
-//            }
+            if ($maxCols > 0 && count($cells) > $maxCols) {
+                $cells = array_slice($cells, 0, $maxCols);
+            }
 
             $result[] = $cells;
             $longest_row_length = max($longest_row_length, count($cells));

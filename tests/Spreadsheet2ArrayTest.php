@@ -18,8 +18,8 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
             ['2016-01-02 12:13:13',	'2016-01-04 12:13:13',	'2016-12-07 12:13:13',	'2016-01-02 12:13:13', null, 'x']
         ],
         'sheet2'=>[['xxx','yyy','zzz'],
-                   [1, 2, 3],
-                   [4, 5, 6]
+            [1, 2, 3],
+            [4, 5, 6]
         ]
     ];
 
@@ -129,7 +129,7 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
      */
     public function testReadTableException($spreadsheet_type){
         //invalid field list
-        $result = Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet2', 0, 0, ['xxx', 'zzz'], true);
+        Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet2', 0, 0, ['xxx', 'zzz'], true);
     }
 
     /**
