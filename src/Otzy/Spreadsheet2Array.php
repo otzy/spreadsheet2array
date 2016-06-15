@@ -159,12 +159,18 @@ class Spreadsheet2Array{
         } elseif ($sheet === false) {
             $objSheet = $objPHPExcel->getActiveSheet();
         } else {
-            throw new Spreadsheet2ArrayException('Invalid type of the $sheet parameter. It must be string, int or boolean false');
+            throw new Spreadsheet2ArrayException('Invalid type of the $sheet parameter. It must be string, int or boolean false'); //@codeCoverageIgnore
         }
 
         return $objSheet;
     }
 
+    /**
+     * @param $type
+     * @return \PHPExcel_Reader_CSV|\PHPExcel_Reader_Excel2007|\PHPExcel_Reader_Excel5|\PHPExcel_Reader_OOCalc
+     * @throws \PHPExcel_Exception
+     * @codeCoverageIgnore
+     */
     private static function getReader($type) {
         switch ($type) {
             case 'xls':
@@ -231,6 +237,8 @@ class Spreadsheet2Array{
      * @param string $method_name
      * @param array $arguments
      * @return mixed
+     *
+     * @codeCoverageIgnore
      */
     public static function invokePrivate($method_name, $arguments){
         $method =  (new \ReflectionClass(__CLASS__))->getMethod($method_name);
@@ -243,6 +251,8 @@ class Spreadsheet2Array{
      *
      * @param float $excel_value
      * @return int
+     *
+     * @codeCoverageIgnore
      */
     public static function excelDate2Timestamp($excel_value){
         return round($excel_value * 86400, 0) - 2209165200;

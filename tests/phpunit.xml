@@ -1,0 +1,13 @@
+<phpunit bootstrap="bootstrap.php">
+    <testsuites>
+        <testsuite name="spreadsheet2array">
+            <directory>.</directory>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="false">
+            <file>../src/Otzy/Spreadsheet2Array.php</file>
+            <exclude>../src/Otzy/Spreadsheet2ArrayException.php</exclude>
+        </whitelist>
+    </filter>
+</phpunit>

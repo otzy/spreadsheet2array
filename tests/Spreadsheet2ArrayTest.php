@@ -3,6 +3,11 @@ namespace Otzy;
 
 class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
 
+    /**
+     * TODO test csv
+     *
+     * @var array
+     */
     public $spreadsheets = array(
         'xlsx' => __DIR__. '/data/test.xlsx',
         'ods' => __DIR__. '/data/test.ods',
@@ -23,8 +28,27 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
         ]
     ];
 
+    /**
+     * two dimensional version of array_slice
+     *
+     * @param array $arr normal non hash array
+     * @param int $first_row zero based
+     * @param int $first_col zero based
+     * @param int $max_rows >0
+     * @param int $max_cols >0
+     * @return array
+     */
+    private static function getSubArray($arr, $first_row, $first_col, $max_rows, $max_cols){
+        $rows = array_slice($arr, $first_row, $max_rows);
+        array_walk($rows, function(&$row)use($first_col, $max_cols){$row = array_slice($row, $first_col, $max_cols);});
+        return $rows;
+    }
+
     public function sheetTypeProvider() {
         $types = array_keys($this->spreadsheets);
+
+        unset($types[2]); //xlsx and ods is enough. We are not going to test PHPExcel here
+
         //convert to array of arrays
         array_walk($types, function (&$v) {
             $v = [$v];
@@ -108,6 +132,20 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
      * @dataProvider sheetTypeProvider
      * @param string $spreadsheet_type
      */
+    public function testReadPartOfSheet($spreadsheet_type){
+
+        //we perform test on a bigger table with empty cells - it's a "sheet1" in our sample files
+        $sheet = Spreadsheet2Array::getSheet($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet1');
+        $test_array = self::getSubArray($this->sheets['sheet1'], 1, 1, 2, 2);
+        $result = Spreadsheet2Array::readHeadlessTable($sheet, 1, 1, 2, 2);
+
+        $this->assertEquals($test_array, $result, __FUNCTION__ . ' failed. If you an error in date/time in the last row, probably it\'s a time zone issue.');
+    }
+
+    /**
+     * @dataProvider sheetTypeProvider
+     * @param string $spreadsheet_type
+     */
     public function testReadTable($spreadsheet_type){
 
         //valid field list
@@ -127,9 +165,29 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
      * @param string $spreadsheet_type
      * @expectedException \Otzy\Spreadsheet2ArrayException
      */
-    public function testReadTableException($spreadsheet_type){
+    public function testReadTableExceptionExtraFields($spreadsheet_type){
         //invalid field list
         Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet2', 0, 0, ['xxx', 'zzz'], true);
+    }
+
+    /**
+     * @dataProvider sheetTypeProvider
+     * @param string $spreadsheet_type
+     * @expectedException \Otzy\Spreadsheet2ArrayException
+     */
+    public function testReadTableExceptionMissingFields($spreadsheet_type){
+        //invalid field list
+        Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet2', 0, 0, ['xxx', 'yyy' ,'zzz', 'ccc'], false);
+    }
+
+    /**
+     * @dataProvider sheetTypeProvider
+     * @param string $spreadsheet_type
+     * @expectedException \Otzy\Spreadsheet2ArrayException
+     */
+    public function testReadTableExceptionWrongFields($spreadsheet_type){
+        //invalid field list
+        Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet2', 0, 0, ['xxx1', 'yyy', 'zzz'], true);
     }
 
     /**
