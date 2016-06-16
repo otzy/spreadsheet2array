@@ -45,7 +45,8 @@ class Spreadsheet2Array{
      * @return array
      * @throws
      */
-    public static function readTable($file_name, $type = 'auto', $sheet = false, $first_row = 0, $first_col = 0, $col_names = false, $check_col_names = false) {
+    public static function readTable($file_name, $type = 'auto', $sheet = false, $first_row = 0, $first_col = 0,
+                                                                    $col_names = false, $check_col_names = false) {
         $objSheet = self::getSheet($file_name, $type, $sheet);
 
         $result = array();
@@ -96,7 +97,7 @@ class Spreadsheet2Array{
      *
      * @return array[]
      */
-    public static function readHeadlessTable(\PHPExcel_Worksheet $objSheet, $firstRow, $firstCol,
+    public static function readRange(\PHPExcel_Worksheet $objSheet, $firstRow, $firstCol,
                                                                                         $maxRows = 0, $maxCols = 0)
     {
         /* @var array[] $result */
