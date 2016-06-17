@@ -116,11 +116,10 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
     public function testReadEntireSheet($spreadsheet_type){
 
         //we perform test on a bigger table with empty cells - it's a "sheet1" in our sample files
-        $sheet = Spreadsheet2Array::getSheet($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet1');
         $test_array = $this->sheets['sheet1'];
-        $result = Spreadsheet2Array::readRange($sheet, 0, 0);
+        $result = Spreadsheet2Array::readRange($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet1');
 
-        //the last row in sheet1 contains date in Excel format. Lets convert it to string
+        //the last row in our sheet1 contains date in Excel format. Lets convert it to string
         for($i = 0; $i<4; $i++){
             $result[4][$i] = date('Y-m-d H:i:s', Spreadsheet2Array::excelDate2Timestamp($result[4][$i]));
         }
@@ -135,9 +134,8 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
     public function testReadPartOfSheet($spreadsheet_type){
 
         //we perform test on a bigger table with empty cells - it's a "sheet1" in our sample files
-        $sheet = Spreadsheet2Array::getSheet($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet1');
         $test_array = self::getSubArray($this->sheets['sheet1'], 1, 1, 2, 2);
-        $result = Spreadsheet2Array::readRange($sheet, 1, 1, 2, 2);
+        $result = Spreadsheet2Array::readRange($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet1', 1, 1, 2, 2);
 
         $this->assertEquals($test_array, $result, __FUNCTION__ . ' failed. If you an error in date/time in the last row, probably it\'s a time zone issue.');
     }

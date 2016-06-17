@@ -25,7 +25,8 @@
 
 namespace Otzy;
 
-class Spreadsheet2Array{
+class Spreadsheet2Array
+{
     /**
      * Read file content to array
      * Parameters:
@@ -46,7 +47,8 @@ class Spreadsheet2Array{
      * @throws
      */
     public static function readTable($file_name, $type = 'auto', $sheet = false, $first_row = 0, $first_col = 0,
-                                                                    $col_names = false, $check_col_names = false) {
+                                     $col_names = false, $check_col_names = false)
+    {
         $objSheet = self::getSheet($file_name, $type, $sheet);
 
         $result = array();
@@ -89,7 +91,12 @@ class Spreadsheet2Array{
     }
 
     /**
-     * @param \PHPExcel_Worksheet $objSheet
+     * @param string $file_name
+     * @param string $type
+     * @param bool|string|int $sheet Sheet Name|Index to read.
+     *                        Index must be passed as an <b>integer</b>. Sheets are zero-based. I.e. first sheet has index=0<br>
+     *                        If <b>false</b> read active sheet. This is normally the sheet, that was active at the moment of Save in Excel or Open Office<br>
+     *                        Not applicable for csv
      * @param int $firstRow
      * @param int $firstCol
      * @param int $maxRows how many rows to read
@@ -97,9 +104,11 @@ class Spreadsheet2Array{
      *
      * @return array[]
      */
-    public static function readRange(\PHPExcel_Worksheet $objSheet, $firstRow, $firstCol,
-                                                                                        $maxRows = 0, $maxCols = 0)
+    public static function readRange($file_name, $type = 'auto', $sheet = false, $firstRow = 0, $firstCol = 0,
+                                     $maxRows = 0, $maxCols = 0)
     {
+        $objSheet = self::getSheet($file_name, $type, $sheet);
+
         /* @var array[] $result */
         $result = array();
         $row_count = 0;
@@ -141,7 +150,8 @@ class Spreadsheet2Array{
      * @throws Spreadsheet2ArrayException
      * @throws \PHPExcel_Exception
      */
-    public static function getSheet($file_name, $type = 'auto', $sheet = false) {
+    public static function getSheet($file_name, $type = 'auto', $sheet = false)
+    {
         if ($type == 'auto') {
             $objPHPExcel = \PHPExcel_IOFactory::load($file_name);
         } else {
@@ -172,7 +182,8 @@ class Spreadsheet2Array{
      * @throws \PHPExcel_Exception
      * @codeCoverageIgnore
      */
-    private static function getReader($type) {
+    private static function getReader($type)
+    {
         switch ($type) {
             case 'xls':
                 $objReader = new \PHPExcel_Reader_Excel5();
@@ -203,7 +214,8 @@ class Spreadsheet2Array{
      * @param int $start_cell
      * @return array
      */
-    private static function readRow(\PHPExcel_Worksheet_Row $row, $start_cell = 0) {
+    private static function readRow(\PHPExcel_Worksheet_Row $row, $start_cell = 0)
+    {
         $result = array();
         $cell_iterator = $row->getCellIterator();
         $cell_iterator->setIterateOnlyExistingCells(false);
@@ -220,14 +232,14 @@ class Spreadsheet2Array{
             $result[] = $cell->getValue();
 
             //remember position of the rightmost not null element, in order to remove null values later without additional loop
-            if ($result[count($result) - 1] !== null){
+            if ($result[count($result) - 1] !== null) {
                 $not_null_right_index = count($result) - 1;
             }
 
         }
 
         //delete all rightmost null elements (Excel issue)
-        $result = array_slice($result, 0, $not_null_right_index+1);
+        $result = array_slice($result, 0, $not_null_right_index + 1);
 
         return $result;
     }
@@ -241,8 +253,9 @@ class Spreadsheet2Array{
      *
      * @codeCoverageIgnore
      */
-    public static function invokePrivate($method_name, $arguments){
-        $method =  (new \ReflectionClass(__CLASS__))->getMethod($method_name);
+    public static function invokePrivate($method_name, $arguments)
+    {
+        $method = (new \ReflectionClass(__CLASS__))->getMethod($method_name);
         $method->setAccessible(true);
         return $method->invokeArgs(null, $arguments);
     }
@@ -255,7 +268,8 @@ class Spreadsheet2Array{
      *
      * @codeCoverageIgnore
      */
-    public static function excelDate2Timestamp($excel_value){
+    public static function excelDate2Timestamp($excel_value)
+    {
         return round($excel_value * 86400, 0) - 2209165200;
     }
 
