@@ -1,7 +1,7 @@
 {
     "name": "otzy/spreadsheet2array",
-    "description": "Autodetects and extracts tables from spreadsheet to PHP array",
-    "keywords": ["spreadsheet", "excel", "open office", "libre office", "csv"],
+    "description": "Extracts tables from spreadsheet to PHP array",
+    "keywords": ["spreadsheet", "excel", "open office", "libre office", "xls", "xslx", "ods", "csv"],
     "type": "library",
     "license": "MIT",
     "authors": [
