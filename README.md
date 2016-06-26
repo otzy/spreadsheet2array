@@ -17,7 +17,7 @@ composer require otzy/spreadsheet2array
                                                                          $col_names = false, $check_col_names = false)
 ```
                                                                         
-yes, many parameters, but usage is really simple
+yes, many parameters, but usage is really simple.
 Lets say you have a spreadsheet like the following one (column and row labels are not shown):
 
 | one | two | three  |
@@ -56,7 +56,7 @@ $my_table = \Otzy\Spreadsheet2Array::readTable('path_to_your_file', 'auto', fals
 
 The presence of required field names is always checked. If at least one field is missing, Spreadsheet2ArrayException will be thrown.
  
-####### complete description of all parameters: 
+###### complete description of all parameters: 
 
 ```
      * @param string $file_name name of file to read
