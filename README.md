@@ -56,7 +56,7 @@ $my_table = \Otzy\Spreadsheet2Array::readTable('path_to_your_file', 'auto', fals
 
 The presence of required field names is always checked. If at least one field is missing, Spreadsheet2ArrayException will be thrown.
  
-###### complete description of all parameters: 
+###### The complete description of all parameters: 
 
 ```
      * @param string $file_name name of file to read
