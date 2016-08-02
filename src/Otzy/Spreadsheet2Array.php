@@ -62,6 +62,10 @@ class Spreadsheet2Array
             if ($row_number == 1) {
                 //this is a header. Read it to array
                 $header = self::readRow($row, $first_col);
+                
+                if (!is_array($col_names)){
+                    $col_names = $header;
+                }
 
                 if ($check_col_names && $header != $col_names) {
                     throw new Spreadsheet2ArrayException('Fields in the spreadsheet differ from the required ones.');
