@@ -161,6 +161,20 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
     /**
      * @dataProvider sheetTypeProvider
      * @param string $spreadsheet_type
+     */
+    public function testReadTableWithAllDefaults($spreadsheet_type){
+        $result = Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet1');
+        $test_array = $this->plain2HashArray($this->sheets['sheet1']);
+        $this->assertEquals($test_array, $result);
+
+        $result = Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet2');
+        $test_array = $this->plain2HashArray($this->sheets['sheet2']);
+        $this->assertEquals($test_array, $result);
+    }
+
+    /**
+     * @dataProvider sheetTypeProvider
+     * @param string $spreadsheet_type
      * @expectedException \Otzy\Spreadsheet2ArrayException
      */
     public function testReadTableExceptionExtraFields($spreadsheet_type){
