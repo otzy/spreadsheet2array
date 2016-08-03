@@ -124,7 +124,7 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
             $result[4][$i] = date('Y-m-d H:i:s', Spreadsheet2Array::excelDate2Timestamp($result[4][$i]));
         }
 
-        $this->assertEquals($test_array, $result, __FUNCTION__ . ' failed. If you an error in date/time in the last row, probably it\'s a time zone issue.');
+        $this->assertEquals($test_array, $result, __FUNCTION__ . ' failed. If you ahve an error in date/time in the last row, probably it\'s a time zone issue.');
     }
 
     /**
@@ -137,7 +137,7 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
         $test_array = self::getSubArray($this->sheets['sheet1'], 1, 1, 2, 2);
         $result = Spreadsheet2Array::readRange($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet1', 1, 1, 2, 2);
 
-        $this->assertEquals($test_array, $result, __FUNCTION__ . ' failed. If you an error in date/time in the last row, probably it\'s a time zone issue.');
+        $this->assertEquals($test_array, $result, __FUNCTION__ . ' failed. If you have an error in date/time in the last row, probably it\'s a time zone issue.');
     }
 
     /**
@@ -155,6 +155,16 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
         $result = Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet2', 0, 0, ['xxx', 'zzz'], false);
         //remove 'yyy'-s from $test_array
         array_walk($test_array, function(&$v){unset($v['yyy']);});
+        $this->assertEquals($test_array, $result);
+    }
+
+    /**
+     * @dataProvider sheetTypeProvider
+     * @param string $spreadsheet_type
+     */
+    public function testReadTableWithAllDefaults($spreadsheet_type){
+        $result = Spreadsheet2Array::readTable($this->spreadsheets[$spreadsheet_type], 'auto', 'sheet2');
+        $test_array = $this->plain2HashArray($this->sheets['sheet2']);
         $this->assertEquals($test_array, $result);
     }
 
