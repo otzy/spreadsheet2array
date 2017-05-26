@@ -24,7 +24,7 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
         ],
         'sheet2'=>[['xxx','yyy','zzz'],
             [1, 2, 3],
-            [4, 5, 6]
+            [4, 5]
         ]
     ];
 
@@ -208,10 +208,19 @@ class SpreadSheet2ArrayTest extends \PHPUnit_Framework_TestCase{
         $result = [];
         $fields = array_shift($array);
         foreach ($array as $row){
+            //missing cells are treated as empty strings
+            $this->arrayAdd($row, '', max(count($fields) - count($row), 0));
             $result[] = array_combine($fields, $row);
         }
 
         return $result;
     }
+
+    private function arrayAdd(&$arr, $value, $number_of_elements){
+        for ($i = 1; $i <= $number_of_elements; $i++){
+            $arr[] = $value;
+        }
+    }
+
 
 }

@@ -83,15 +83,24 @@ class Spreadsheet2Array
             }
 
             $cells = self::readRow($row, $first_col);
-            $cells_filtered = array();
-            foreach ($col_names as $field_name) {
-                $cells_filtered[$field_name] = $cells[$header_index[$field_name]];
-            }
-
-            $result[] = $cells_filtered;
+            $result[] = static::filterRow($cells, $col_names, $header_index);
         }
 
         return $result;
+    }
+
+    private static function filterRow($cells, $col_names, $header_index){
+        $cells_filtered = array();
+        foreach ($col_names as $field_name) {
+            if (array_key_exists($header_index[$field_name], $cells)){
+                $cells_filtered[$field_name] = $cells[$header_index[$field_name]];
+            } else {
+                //if the row is shorter than other rows we treat missing cells as empty strings
+                $cells_filtered[$field_name] = '';
+            }
+        }
+
+        return $cells_filtered;
     }
 
     /**
